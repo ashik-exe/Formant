@@ -3,7 +3,8 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { SEO_PAGES, getCanonicalServiceSlug } from '../src/lib/seo.js';
+import { SEO_PAGES, getCanonicalServiceSlug, SITE_ORIGIN } from '../src/lib/seo.js';
+import { rewriteSitemapOrigin } from '../src/lib/sitemap.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -58,6 +59,24 @@ describe('Sitemap & SEO Configuration', () => {
     }
 
     assert.ok(count >= 10, `Expected at least 10 sitemap URLs, found ${count}`);
+  });
+
+  it('build sitemap preserves source lastmod values while rewriting only the site origin', () => {
+    const sitemapPath = path.join(rootDir, 'public', 'sitemap.xml');
+    const source = fs.readFileSync(sitemapPath, 'utf8');
+    const generated = rewriteSitemapOrigin(source, 'https://staging.example');
+
+    assert.deepEqual(
+      [...generated.matchAll(/<lastmod>(.*?)<\/lastmod>/g)].map((match) => match[1]),
+      [...source.matchAll(/<lastmod>(.*?)<\/lastmod>/g)].map((match) => match[1]),
+      'generated sitemap must preserve the source modification dates'
+    );
+    assert.equal((generated.match(/<loc>https:\/\/staging\.example\//g) || []).length,
+      (source.match(/<loc>/g) || []).length,
+      'every sitemap location must use the configured origin'
+    );
+    assert.doesNotMatch(generated, /https:\/\/www\.formant\.cv/);
+    assert.equal(rewriteSitemapOrigin(source, SITE_ORIGIN), source);
   });
 
   it('describes Formant accurately and avoids unsupported SEO claims', () => {

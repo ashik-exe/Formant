@@ -3,6 +3,7 @@ import react from '@vitejs/plugin-react'
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { SEO_PAGES, SITE_ORIGIN, BRAND_IMAGE, getStructuredData } from './src/lib/seo.js'
+import { rewriteSitemapOrigin } from './src/lib/sitemap.js'
 
 function escapeAttribute(value) {
   return String(value).replaceAll('&', '&amp;').replaceAll('"', '&quot;').replaceAll('<', '&lt;');
@@ -63,32 +64,9 @@ function staticSeoPages() {
         }
       }
 
-      // Keep dist/sitemap.xml and dist/robots.txt synchronized with SITE_ORIGIN
-      const sitemapUrls = Object.keys(SEO_PAGES).map((pagePath) => {
-        const loc = `${SITE_ORIGIN}${pagePath === '/' ? '/' : pagePath}`;
-        let priority = '0.8';
-        let changefreq = 'monthly';
-        if (pagePath === '/') {
-          priority = '1.0';
-          changefreq = 'weekly';
-        } else if (pagePath === '/services') {
-          priority = '0.9';
-          changefreq = 'weekly';
-        } else if (pagePath === '/showcase') {
-          priority = '0.8';
-          changefreq = 'weekly';
-        } else if (pagePath === '/pricing') {
-          priority = '0.7';
-        } else if (pagePath === '/about' || pagePath === '/contact') {
-          priority = '0.6';
-        } else if (['/privacy', '/terms', '/refund'].includes(pagePath)) {
-          priority = '0.3';
-          changefreq = 'yearly';
-        }
-        return `  <url>\n    <loc>${loc}</loc>\n    <lastmod>2026-10-23</lastmod>\n    <changefreq>${changefreq}</changefreq>\n    <priority>${priority}</priority>\n  </url>`;
-      }).join('\n');
-
-      const sitemapXml = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${sitemapUrls}\n</urlset>\n`;
+      // public/sitemap.xml is the source of truth for route inclusion and lastmod dates.
+      const sitemapSource = readFileSync(resolve('public/sitemap.xml'), 'utf8');
+      const sitemapXml = rewriteSitemapOrigin(sitemapSource, SITE_ORIGIN);
       writeFileSync(resolve(outputDirectory, 'sitemap.xml'), sitemapXml);
 
       const robotsTxt = `User-agent: *\nAllow: /\nDisallow: /auth/\nDisallow: /forgot-password\nDisallow: /reset-password\nDisallow: /assessment\nDisallow: /service-selection\nDisallow: /dashboard/\nDisallow: /dashboard\nDisallow: /admin/\nDisallow: /admin\n\nSitemap: ${SITE_ORIGIN}/sitemap.xml\n`;

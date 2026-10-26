@@ -1,4 +1,5 @@
   import React, { useEffect, useMemo, useRef, useState } from 'react';
+import './messages.css';
 import { Link, useLocation } from 'react-router-dom';
 import DashboardShell from '../components/DashboardShell';
 import { useToast } from '../components/ToastProvider';

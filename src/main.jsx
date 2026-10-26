@@ -12,7 +12,6 @@ import { applyStoredTheme } from './lib/theme';
 import { applySeoMetadata, normalizePath } from './lib/seo';
 import { getHostRouteDestination, isAdminHostname } from './lib/adminHostRouting';
 import './styles.css';
-import './pages/messages.css';
 
 import { ToastProvider } from './components/ToastProvider';
 import { PageNotFound, RouteErrorBoundary } from './components/ErrorExperience';
@@ -69,7 +68,6 @@ const AdminShowcase = React.lazy(() => import('./pages/AdminShowcase'));
 const AdminLeads = React.lazy(() => import('./pages/AdminLeads'));
 const AdminSettings = React.lazy(() => import('./pages/AdminSettings'));
 
-import './dashboard-refinement.css';
 
 const DevShadowComparison = import.meta.env.DEV
   ? React.lazy(() => import('./pages/DevShadowComparison'))
